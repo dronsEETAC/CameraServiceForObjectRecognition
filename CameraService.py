@@ -11,32 +11,67 @@ import json
 
 from ColorDetector import ColorDetector
 
+from picamera2 import Picamera2
+
+from YOLOv5 import YOLOv5
+
 
 def send_video_stream(origin, client):
     global sending_video_stream
     global cap
+    global quality
+    global period
+    global cam_mode
+    global picam2
     topic_to_publish = f"cameraService/{origin}/videoFrame"
 
     while sending_video_stream:
-        # Read Frame
-        ret, frame = cap.read()
-        if ret:
-            _, image_buffer = cv.imencode(".jpg", frame)
+        if cam_mode == "webcam":
+            # Read Frame
+            ret, frame = cap.read()
+            if ret:
+                ################################################################################
+                encode_param = [int(cv.IMWRITE_JPEG_QUALITY), quality]
+                _, image_buffer = cv.imencode(".jpg", frame, encode_param)
+                jpg_as_text = base64.b64encode(image_buffer)
+                client.publish(topic_to_publish, jpg_as_text)
+                time.sleep(period)
+                ################################################################################
+        elif cam_mode == "picamera2":
+            # Read Frame
+            frame = picam2.capture_array()
+
+            ################################################################################
+            encode_param = [int(cv.IMWRITE_JPEG_QUALITY), quality]
+            _, image_buffer = cv.imencode(".jpg", frame, encode_param)
             jpg_as_text = base64.b64encode(image_buffer)
             client.publish(topic_to_publish, jpg_as_text)
-            time.sleep(0.2)
+            time.sleep(period)
+            ################################################################################
 
 
 def send_video_for_calibration(origin, client):
     global sending_video_for_calibration
     global cap
     global colorDetector
+    global cam_mode
+    global picam2
     topic_to_publish = f"cameraService/{origin}/videoFrame"
 
     while sending_video_for_calibration:
-        # Read Frame
-        ret, frame = cap.read()
-        if ret:
+        if cam_mode == "webcam":
+            # Read Frame
+            ret, frame = cap.read()
+            if ret:
+                frame = colorDetector.MarkFrameForCalibration(frame)
+                _, image_buffer = cv.imencode(".jpg", frame)
+                jpg_as_text = base64.b64encode(image_buffer)
+                client.publish(topic_to_publish, jpg_as_text)
+                time.sleep(0.2)
+        elif cam_mode == "picamera2":
+            # Read Frame
+            frame = picam2.capture_array()
+
             frame = colorDetector.MarkFrameForCalibration(frame)
             _, image_buffer = cv.imencode(".jpg", frame)
             jpg_as_text = base64.b64encode(image_buffer)
@@ -48,12 +83,27 @@ def send_video_with_colors(origin, client):
     global finding_colors
     global cap
     global colorDetector
+    global cam_mode
+    global picam2
     topic_to_publish = f"cameraService/{origin}/videoFrameWithColor"
 
     while finding_colors:
-        # Read Frame
-        ret, frame = cap.read()
-        if ret:
+        if cam_mode == "webcam":
+            # Read Frame
+            ret, frame = cap.read()
+            if ret:
+                frame, color = colorDetector.DetectColor(frame)
+                _, image_buffer = cv.imencode(".jpg", frame)
+                frame_as_text = base64.b64encode(image_buffer)
+                base64_string = frame_as_text.decode("utf-8")
+                frame_with_colorJson = {"frame": base64_string, "color": color}
+                frame_with_color = json.dumps(frame_with_colorJson)
+                client.publish(topic_to_publish, frame_with_color)
+                time.sleep(0.2)
+        elif cam_mode == "picamera2":
+            # Read Frame
+            frame = picam2.capture_array()
+
             frame, color = colorDetector.DetectColor(frame)
             _, image_buffer = cv.imencode(".jpg", frame)
             frame_as_text = base64.b64encode(image_buffer)
@@ -64,6 +114,31 @@ def send_video_with_colors(origin, client):
             time.sleep(0.2)
 
 
+def detection(origin, client):
+    global cap
+    # global quality
+    # global period
+    global cam_mode
+    global cap
+    global picam2
+    global detecting
+    global yolov5
+    topic_to_publish = "cameraService/autopilotService/land"
+    topic_to_publish_2 = "cameraService/cameraService/stopDetection"
+
+    detected = False
+    while detecting:
+        if cam_mode == "webcam":
+            detected = yolov5.detect_webcam(cap)
+        elif cam_mode == "picamera2":
+            detected = yolov5.detect_picam2(picam2)
+
+        if detected == True:
+            client.publish(topic_to_publish)
+            client.publish(topic_to_publish_2)
+            
+
+
 def process_message(message, client):
 
     global sending_video_stream
@@ -71,6 +146,12 @@ def process_message(message, client):
     global finding_colors
     global cap
     global colorDetector
+    global quality
+    global period
+    global cam_mode
+    global picam2
+    global detecting
+    global yolov5
 
     splited = message.topic.split("/")
     origin = splited[0]
@@ -80,15 +161,30 @@ def process_message(message, client):
     if command == "takePicture":
         print("Take picture")
         ret = False
-        for n in range(1, 20):
-            # this loop is required to discard first frames
-            ret, frame = cap.read()
+        if cam_mode == "webcam":
+            for n in range(1, 20):
+                # this loop is required to discard first frames
+                ret, frame = cap.read()
+        elif cam_mode == "picamera2":
+            for n in range(1, 20):
+                # this loop is required to discard first frames
+                frame = picam2.capture_array()
         _, image_buffer = cv.imencode(".jpg", frame)
         # Converting into encoded bytes
         jpg_as_text = base64.b64encode(image_buffer)
         client.publish("cameraService/" + origin + "/picture", jpg_as_text)
 
     if command == "startVideoStream":
+        ################################################################################
+        payload = message.payload.decode("utf-8")
+        if payload == "":
+            quality = 50
+            period = 0.2
+        else:
+            payload_splited = payload.split("/")
+            quality = int(payload_splited[0])
+            period = float(payload_splited[1])
+        ################################################################################
         print("start video stream")
         sending_video_stream = True
         w = threading.Thread(
@@ -127,7 +223,7 @@ def process_message(message, client):
         client.publish("cameraService/" + origin + "/colorValues", colors)
     if command == "getColorValues":
         colorDetector.TomaValores()
-        print("ya he tomado los valroe")
+        print("ya he tomado los valores")
         yellow, green, blueS, blueL, pink, purple = colorDetector.DameValores()
         colorsJson = {
             "yellow": yellow,
@@ -155,6 +251,22 @@ def process_message(message, client):
     if command == "stopFindingColor":
         finding_colors = False
 
+    if command == "startDetection":
+        payload = message.payload.decode("utf-8")
+        yolov5.load_model(payload)
+
+        print("start detection")
+        detecting = True
+        w = threading.Thread(
+            target=detection,
+            args=(origin, client),
+        )
+        w.start()
+
+    if command == "stopDetection":
+        print("stop detection")
+        detecting = False
+
 
 def on_internal_message(client, userdata, message):
     print("recibo internal ", message.topic)
@@ -176,19 +288,31 @@ def on_connect(external_client, userdata, flags, rc):
         print("Bad connection")
 
 
-def CameraService(connection_mode, operation_mode, external_broker, username, password):
+def CameraService(connection_mode, operation_mode, camera_mode, external_broker, username, password):
     global op_mode
     global external_client
     global internal_client
     global state
     global cap
     global colorDetector
+    global picam2
+    global cam_mode
+    global yolov5
 
     sending_video_stream = False
 
-    cap = cv.VideoCapture(0)  # video capture source camera (Here webcam of lap>
+    if camera_mode == "webcam":
+        cap = cv.VideoCapture(0)  # video capture source camera (Here webcam of lap>
+    elif camera_mode == "picamera2":
+        # start the RPi on board camera (picamera2)
+        picam2 = Picamera2()
+        picam2.configure(picam2.create_preview_configuration(main={"format": 'XRGB8888', "size": (640, 480)}))
+        picam2.start()
+    cam_mode = camera_mode
 
     colorDetector = ColorDetector()
+
+    yolov5 = YOLOv5()
 
     print("Camera ready")
 
@@ -274,14 +398,15 @@ if __name__ == "__main__":
 
     connection_mode = sys.argv[1]  # global or local
     operation_mode = sys.argv[2]  # simulation or production
+    camera_mode = sys.argv[3]  # webcam or picamera2
     username = None
     password = None
     if connection_mode == "global":
-        external_broker = sys.argv[3]
+        external_broker = sys.argv[4]
         if external_broker == "classpip_cred" or external_broker == "classpip_cert":
-            username = sys.argv[4]
-            password = sys.argv[5]
+            username = sys.argv[5]
+            password = sys.argv[6]
     else:
         external_broker = None
 
-    CameraService(connection_mode, operation_mode, external_broker, username, password)
+    CameraService(connection_mode, operation_mode, camera_mode, external_broker, username, password)
