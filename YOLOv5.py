@@ -22,31 +22,29 @@ class YOLOv5:
         df = pred.pandas().xyxy[0]
         # Filter by confidence
         df = df[df["confidence"] > 0.5]
+        
+        detected = False
 
         for i in range(df.shape[0]):
             bbox = df.iloc[i][["xmin", "ymin", "xmax", "ymax"]].values.astype(int)
 
             # Give land order if object is detected
             if df.iloc[i]['name'] == self.object and df.iloc[i]['confidence'] > 0.6:
-                print(f"{df.iloc[i]['name']} detected. Sending land order...")
-                # publish land order (autopilotService)
-                return True
-                # autopilot_client.publish("AutopilotClient/autopilotService/land")
-
+                print(f"{df.iloc[i]['name']} detected.")
+                detected = True
 
             # print bboxes: frame -> (xmin, ymin), (xmax, ymax)
-            #cv.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
+            cv.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
             # print text
-            #cv.putText(frame,
-            #            f"{df.iloc[i]['name']}: {round(df.iloc[i]['confidence'], 4)}",
-            #            (bbox[0], bbox[1] - 15),
-            #            cv.FONT_HERSHEY_PLAIN,
-            #            1,
-            #            (255, 255, 255),
-            #            2)
+            cv.putText(frame,
+                        f"{df.iloc[i]['name']}: {round(df.iloc[i]['confidence'], 4)}",
+                        (bbox[0], bbox[1] - 15),
+                        cv.FONT_HERSHEY_PLAIN,
+                        1,
+                        (255, 255, 255),
+                        2)
 
-        #cv.imshow("Camera", frame) # for testing purposes, comment line after testing
-        return False
+        return frame, detected
     
     def detect_webcam(self, cap):
         ret, frame = cap.read()
@@ -57,26 +55,26 @@ class YOLOv5:
         df = pred.pandas().xyxy[0]
         # Filter by confidence
         df = df[df["confidence"] > 0.5]
+        
+        detected = False
 
         for i in range(df.shape[0]):
             bbox = df.iloc[i][["xmin", "ymin", "xmax", "ymax"]].values.astype(int)
 
             # Give land order if object is detected
             if df.iloc[i]['name'] == self.object and df.iloc[i]['confidence'] > 0.6:
-                print(f"{df.iloc[i]['name']} detected. Sending land order...")
-                # publish land order (autopilotService)
-                return True
+                print(f"{df.iloc[i]['name']} detected.")
+                detected = True
 
             # print bboxes: frame -> (xmin, ymin), (xmax, ymax)
-            #cv.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
+            cv.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
             # print text
-            #cv.putText(frame,
-            #            f"{df.iloc[i]['name']}: {round(df.iloc[i]['confidence'], 4)}",
-            #            (bbox[0], bbox[1] - 15),
-            #            cv.FONT_HERSHEY_PLAIN,
-            #            1,
-            #            (255, 255, 255),
-            #            2)
+            cv.putText(frame,
+                        f"{df.iloc[i]['name']}: {round(df.iloc[i]['confidence'], 4)}",
+                        (bbox[0], bbox[1] - 15),
+                        cv.FONT_HERSHEY_PLAIN,
+                        1,
+                        (255, 255, 255),
+                        2)
 
-        #cv.imshow("Camera", frame) # for testing purposes, comment line after testing
-        return False
+        return frame, detected

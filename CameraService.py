@@ -116,24 +116,42 @@ def send_video_with_colors(origin, client):
 
 def detection(origin, client):
     global cap
-    # global quality
-    # global period
+    global quality
+    global period
     global cam_mode
     global cap
     global picam2
     global detecting
     global yolov5
-    topic_to_publish = f"cameraService/{origin}/objectDetected"
-
+    topic_to_publish = f"cameraService/{origin}/detectionVideoFrame"
+    topic_to_publish2 = f"cameraService/{origin}/objectDetected"
+    
+    # configure image quality
+    if cam_mode == "webcam":
+        width = 640*quality/100
+        height = 480*quality/100
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    elif cam_mode == "picamera2":
+        if quality > 95:
+            quality = 95
+        picam2.options["quality"] = quality
+        
+     # start loop for detection
     detected = False
     while detecting:
         if cam_mode == "webcam":
-            detected = yolov5.detect_webcam(cap)
+            frame, detected = yolov5.detect_webcam(cap)
         elif cam_mode == "picamera2":
-            detected = yolov5.detect_picam2(picam2)
-
+            frame, detected = yolov5.detect_picam2(picam2)
+        
+        _, image_buffer = cv.imencode(".jpg", frame)
+        jpg_as_text = base64.b64encode(image_buffer)
+        client.publish(topic_to_publish, jpg_as_text)
+        time.sleep(period)
+        
         if detected == True:
-            client.publish(topic_to_publish)
+            client.publish(topic_to_publish2)
             
 
 
@@ -251,7 +269,11 @@ def process_message(message, client):
 
     if command == "startDetection":
         payload = message.payload.decode("utf-8")
-        yolov5.load_model(payload)
+        payload_splited = payload.split("/")
+        object_ = str(payload_splited[0])
+        quality = int(payload_splited[1])
+        period = float(payload_splited[2])
+        yolov5.load_model(object_)
 
         print("start detection")
         detecting = True
