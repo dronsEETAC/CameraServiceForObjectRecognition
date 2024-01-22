@@ -11,7 +11,7 @@ class YOLOv5:
         self.object = object
         model_path = f"weights/{object}.pt"
         # I think that the following loads the local model without needing Internet connection
-        self.model = torch.hub.load('.', 'custom', path=model_path, source='local')
+        self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path)
 
     def detect_picam2(self, picam2):
         frame = picam2.capture_array()
@@ -35,17 +35,17 @@ class YOLOv5:
 
 
             # print bboxes: frame -> (xmin, ymin), (xmax, ymax)
-            cv.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
+            #cv.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
             # print text
-            cv.putText(frame,
-                        f"{df.iloc[i]['name']}: {round(df.iloc[i]['confidence'], 4)}",
-                        (bbox[0], bbox[1] - 15),
-                        cv.FONT_HERSHEY_PLAIN,
-                        1,
-                        (255, 255, 255),
-                        2)
+            #cv.putText(frame,
+            #            f"{df.iloc[i]['name']}: {round(df.iloc[i]['confidence'], 4)}",
+            #            (bbox[0], bbox[1] - 15),
+            #            cv.FONT_HERSHEY_PLAIN,
+            #            1,
+            #            (255, 255, 255),
+            #            2)
 
-        cv.imshow("Camera", frame) # for testing purposes, comment line after testing
+        #cv.imshow("Camera", frame) # for testing purposes, comment line after testing
         return False
     
     def detect_webcam(self, cap):
@@ -68,15 +68,15 @@ class YOLOv5:
                 return True
 
             # print bboxes: frame -> (xmin, ymin), (xmax, ymax)
-            cv.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
+            #cv.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
             # print text
-            cv.putText(frame,
-                        f"{df.iloc[i]['name']}: {round(df.iloc[i]['confidence'], 4)}",
-                        (bbox[0], bbox[1] - 15),
-                        cv.FONT_HERSHEY_PLAIN,
-                        1,
-                        (255, 255, 255),
-                        2)
+            #cv.putText(frame,
+            #            f"{df.iloc[i]['name']}: {round(df.iloc[i]['confidence'], 4)}",
+            #            (bbox[0], bbox[1] - 15),
+            #            cv.FONT_HERSHEY_PLAIN,
+            #            1,
+            #            (255, 255, 255),
+            #            2)
 
-        cv.imshow("Camera", frame) # for testing purposes, comment line after testing
+        #cv.imshow("Camera", frame) # for testing purposes, comment line after testing
         return False

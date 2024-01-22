@@ -123,8 +123,7 @@ def detection(origin, client):
     global picam2
     global detecting
     global yolov5
-    topic_to_publish = "cameraService/autopilotService/land"
-    topic_to_publish_2 = "cameraService/cameraService/stopDetection"
+    topic_to_publish = f"cameraService/{origin}/objectDetected"
 
     detected = False
     while detecting:
@@ -135,7 +134,6 @@ def detection(origin, client):
 
         if detected == True:
             client.publish(topic_to_publish)
-            client.publish(topic_to_publish_2)
             
 
 
