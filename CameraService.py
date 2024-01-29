@@ -130,8 +130,8 @@ def detection(origin, client):
     if cam_mode == "webcam":
         width = 640*quality/100
         height = 480*quality/100
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
+        cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
     elif cam_mode == "picamera2":
         if quality > 95:
             quality = 95
