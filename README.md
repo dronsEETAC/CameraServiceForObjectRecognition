@@ -1,7 +1,9 @@
 # Camera service
 
 ## Previous note
-This repo is a modified version of the original CameraServiceDEE repo. The changes that have been made in this repo are described in the following video: [CameraService con YOLOv5 y Picamera2 - código](https://youtu.be/_6Q4wWUODhs). 
+This repo is a modified version of the original CameraServiceDEE repo. The changes that have been made in this repo are described in the following video:
+[![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-code_camera_service-pink.svg)](https://youtu.be/_6Q4wWUODhs).   
+     
 The changes that have been made are briefly described here:
 - It has been added the possibility ob usign both a Webcam and the Picamera2 as the image capture source. Now, it has to be specified which source (webcam or picamera2) will be used as the third parameter.
 - It has been added the YOLOv5 class, which has two main functions: loading the model and do detection of one frame.
