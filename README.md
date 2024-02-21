@@ -7,7 +7,8 @@ This repo is a modified version of the original CameraServiceDEE repo. The chang
 The changes that have been made are briefly described here:
 - It has been added the possibility ob usign both a Webcam and the Picamera2 as the image capture source. Now, it has to be specified which source (webcam or picamera2) will be used as the third parameter.
 - It has been added the YOLOv5 class, which has two main functions: loading the model and do detection of one frame.
-- It has been added the possibility to receive the "startDetection" and "stopDetection" messages. The first one initializes the function Detection(), which carries out a loop for the detection of frames.
+- It has been added the possibility to receive the "startDetection" and "stopDetection" messages. The first one initializes the function Detection(), which carries out a loop for the detection of frames.     
+This modified version of Camera Service is requiered to work with the demo app for object recognition that can be found here: [![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-object_recognition-blue.svg)](https://github.com/dronsEETAC/ObjectRecognitionWithNN)
 
 ## Introduction
 The camera service is an on-board module that provides images to the rest of modules of the ecosystem, as required.
