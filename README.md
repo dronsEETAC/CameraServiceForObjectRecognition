@@ -2,7 +2,7 @@
 
 ## Previous note
 This repo is a modified version of the original CameraServiceDEE repo. The changes that have been made in this repo are described in the following video:
-[![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-code_camera_service-pink.svg)](https://youtu.be/_6Q4wWUODhs).   
+[![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-code_camera_service-pink.svg)](https://www.youtube.com/watch?v=DdhoyLpu8eM)
      
 The changes that have been made are briefly described here:
 - It has been added the possibility ob usign both a Webcam and the Picamera2 as the image capture source. Now, it has to be specified which source (webcam or picamera2) will be used as the third parameter.
